@@ -1,0 +1,27 @@
+.map-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 30px;
+}
+
+.map-frame {
+    border: 2px solid black;
+    height: 100%;
+}
+
+#map {
+    height: 100%;
+}
+
+.leaflet-routing-alt {
+    background-color: whitesmoke;
+}
+
+#button-wrapper {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+}
