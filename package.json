@@ -1,6 +1,6 @@
 {
-  "name": "random-route",
-  "version": "0.0.0",
+  "name": "o-runner",
+  "version": "0.0.1",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -23,6 +23,7 @@
     "@mapbox/leaflet-omnivore": "^0.3.4",
     "@npmcli/move-file": "^1.1.2",
     "@types/leaflet": "^1.5.12",
+    "@types/leaflet-imageoverlay-rotated": "^0.1.4",
     "dsv": "^0.0.3",
     "fast-glob": "^3.2.5",
     "is-core-module": "^2.2.0",

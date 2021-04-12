@@ -57,11 +57,19 @@ export class MapComponent implements AfterViewInit {
     //animatedMarker.start();
   }
 
-  public addRepositionMarkers(point1: L.LatLng, point2: L.LatLng, point3: L.LatLng, imageOverlay: L.ImageOverlay)
+  public addRepositionMarkers(point1: L.LatLng, point2: L.LatLng, point3: L.LatLng, imageOverlay: L.ImageOverlay.Rotated)
   {
-    var marker1 = L.marker(point1, {draggable: true} ).addTo(this.map),
-		    marker2 = L.marker(point2, {draggable: true} ).addTo(this.map),
-		    marker3 = L.marker(point3, {draggable: true} ).addTo(this.map);
+
+      var myicon = L.icon({
+        iconSize: [ 25, 41 ],
+        iconAnchor: [ 12, 41 ],
+        iconUrl: 'assets/marker-icon.png',
+        shadowUrl: 'assets/marker-shadow.png'
+        });
+
+      var marker1 = L.marker(point1, {draggable: true, icon: myicon } ).addTo(this.map),
+      marker2 = L.marker(point2, {draggable: true, icon: myicon } ).addTo(this.map),
+      marker3 = L.marker(point3, {draggable: true, icon: myicon } ).addTo(this.map);
 
     function repositionImage() {
       imageOverlay.reposition(marker1.getLatLng(), marker2.getLatLng(), marker3.getLatLng());

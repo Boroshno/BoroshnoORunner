@@ -1321,6 +1321,13 @@
   "resolved" "https://registry.npmjs.org/@types/json-schema/-/json-schema-7.0.7.tgz"
   "version" "7.0.7"
 
+"@types/leaflet-imageoverlay-rotated@^0.1.4":
+  "integrity" "sha512-b5Q2h1D4APy/hsYfqU1D1WGzsg7/jcxaezZk52R6V0VicqS9Lno72+ok0VNYTkdWmAWHhRFuwJOU1TldznYBqQ=="
+  "resolved" "https://registry.npmjs.org/@types/leaflet-imageoverlay-rotated/-/leaflet-imageoverlay-rotated-0.1.4.tgz"
+  "version" "0.1.4"
+  dependencies:
+    "@types/leaflet" "*"
+
 "@types/leaflet-routing-machine@^3.2.1":
   "integrity" "sha512-HNjUDxWCpMcSpj26Ev7IAKYNJvhW7I5sVhpXlv9KRwYBqlASS6sXcteYOukbCZfccbUOEMWuwzqFvn7f/D1hiw=="
   "resolved" "https://registry.npmjs.org/@types/leaflet-routing-machine/-/leaflet-routing-machine-3.2.1.tgz"
