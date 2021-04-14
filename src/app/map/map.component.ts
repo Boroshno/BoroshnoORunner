@@ -5,7 +5,8 @@ import 'leaflet-imageoverlay-rotated';
 import * as omnivore from '@mapbox/leaflet-omnivore';
 import 'leaflet-routing-machine';
 import 'lrm-graphhopper';
-//import 'leaflet.animatedmarker';
+import "leaflet.animatedmarker/src/AnimatedMarker";
+
 
 @Component({
   selector: 'app-map',
@@ -17,6 +18,7 @@ export class MapComponent implements AfterViewInit {
   private map;
   private showRepositionMarker = true; 
   public mapImg : mapImage;
+  public animatedMarker: any;
 
   constructor() {
     this.mapImg = new mapImage();
@@ -40,6 +42,19 @@ export class MapComponent implements AfterViewInit {
     var runLayer = omnivore.gpx('assets/4906407462.gpx')
     .on('ready', function() {
       that.map.fitBounds(runLayer.getBounds());
+
+      if (runLayer.getLayers()[0]) 
+      {
+        this.animatedMarker = L.animatedMarker(runLayer.getLayers()[0].getLatLngs(), {
+          icon: L.icon({
+            iconUrl: 'assets/redot.png',
+            iconSize: [10, 10],
+            shadowUrl: null
+          })
+        });
+        this.animatedMarker.addTo(that.map);
+        this.animatedMarker.start();
+      }
     })
     .addTo(this.map);
 
@@ -52,9 +67,6 @@ export class MapComponent implements AfterViewInit {
     if (this.showRepositionMarker) this.addRepositionMarkers(this.mapImg.point1, this.mapImg.point2, this.mapImg.point3, imageOverlay);
 
     this.map.addLayer(imageOverlay);
-    
-    //var animatedMarker = L.animatedMarker(runLayer._layers[70].getLatLngs());
-    //animatedMarker.start();
   }
 
   public addRepositionMarkers(point1: L.LatLng, point2: L.LatLng, point3: L.LatLng, imageOverlay: L.ImageOverlay.Rotated)
