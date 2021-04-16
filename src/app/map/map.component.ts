@@ -53,6 +53,21 @@ export class MapComponent implements AfterViewInit {
       }
     })
     .addTo(this.map);
+    
+    var secondGpx = omnivore.gpx('assets/ObolonaRun/5111036665.gpx', null, L.geoJSON(null, { style: { color: '#ff0000' } }))
+    .on('ready', function() {
+      that.map.fitBounds(secondGpx.getBounds());
+
+      if (secondGpx.getLayers()[0]) 
+      {
+        this.animatedMarker = L.animatedMarker(secondGpx.getLayers()[0].getLatLngs(), {
+          icon: L.divIcon({className: 'red-div-icon'})
+        });
+        this.animatedMarker.addTo(that.map);
+        this.animatedMarker.start();
+      }
+    })
+    .addTo(this.map);
 
     tiles.addTo(this.map);
 
