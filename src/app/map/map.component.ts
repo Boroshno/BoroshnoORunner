@@ -39,18 +39,14 @@ export class MapComponent implements AfterViewInit {
 
     var that = this;
 
-    var runLayer = omnivore.gpx('assets/4906407462.gpx')
+    var runLayer = omnivore.gpx(this.mapImg.gpxFile)
     .on('ready', function() {
       that.map.fitBounds(runLayer.getBounds());
 
       if (runLayer.getLayers()[0]) 
       {
         this.animatedMarker = L.animatedMarker(runLayer.getLayers()[0].getLatLngs(), {
-          icon: L.icon({
-            iconUrl: 'assets/redot.png',
-            iconSize: [10, 10],
-            shadowUrl: null
-          })
+          icon: L.divIcon({className: 'blue-div-icon'})
         });
         this.animatedMarker.addTo(that.map);
         this.animatedMarker.start();
