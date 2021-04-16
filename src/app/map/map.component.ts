@@ -6,6 +6,7 @@ import * as omnivore from '@mapbox/leaflet-omnivore';
 import 'leaflet-routing-machine';
 import 'lrm-graphhopper';
 import "leaflet.animatedmarker/src/AnimatedMarker";
+import 'leaflet-timedimension/dist/leaflet.timedimension.src.js';
 
 
 @Component({
@@ -16,8 +17,8 @@ import "leaflet.animatedmarker/src/AnimatedMarker";
 export class MapComponent implements AfterViewInit {
 
   private map;
-  private showRepositionMarker = true; 
-  public mapImg : mapImage;
+  private showRepositionMarker = true;
+  public mapImg: mapImage;
   public animatedMarker: any;
 
   constructor() {
@@ -25,81 +26,125 @@ export class MapComponent implements AfterViewInit {
    }
 
   ngAfterViewInit(): void {
-    this.initMap();
+    this.initTimeDimensions();
   }
 
-  private initMap(): void {
-
-    this.map = L.map('map', {});
-
+  private initTimeDimensions() {
     const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     });
 
-    var that = this;
+    this.initializeMap(tiles);
 
-    var runLayer = omnivore.gpx(this.mapImg.gpxFile)
-    .on('ready', function() {
-      that.map.fitBounds(runLayer.getBounds());
-
-      if (runLayer.getLayers()[0]) 
+    const runners = [
       {
-        this.animatedMarker = L.animatedMarker(runLayer.getLayers()[0].getLatLngs(), {
-          icon: L.divIcon({className: 'blue-div-icon'})
-        });
-        this.animatedMarker.addTo(that.map);
-        this.animatedMarker.start();
-      }
-    })
-    .addTo(this.map);
-    
-    var secondGpx = omnivore.gpx('assets/ObolonaRun/5111036665.gpx', null, L.geoJSON(null, { style: { color: '#ff0000' } }))
-    .on('ready', function() {
-      that.map.fitBounds(secondGpx.getBounds());
-
-      if (secondGpx.getLayers()[0]) 
+        name: 'Dimon',
+        markerClassName: 'blue-div-icon',
+        gpxFile: this.mapImg.gpxFile
+      },
       {
-        this.animatedMarker = L.animatedMarker(secondGpx.getLayers()[0].getLatLngs(), {
-          icon: L.divIcon({className: 'red-div-icon'})
-        });
-        this.animatedMarker.addTo(that.map);
-        this.animatedMarker.start();
+        name: 'Sanya',
+        markerClassName: 'red-div-icon',
+        gpxFile: 'assets/ObolonaRun/5111036665.gpx'
       }
-    })
-    .addTo(this.map);
+    ];
+
+    const baseLayers = {
+      OSM: tiles
+    };
+    const overlayMaps = {};
+
+    runners.forEach(({name, markerClassName, gpxFile}) => {
+      const customLayer = this.getCustomLayer(markerClassName);
+      const gpxLayer = this.initGpxLayer(gpxFile, customLayer);
+      const gpxTimeLayer = this.initTimeLayer(gpxLayer);
+      overlayMaps[name] = gpxTimeLayer;
+      gpxTimeLayer.addTo(this.map);
+    });
+  }
+
+  private initTimeLayer(gpxLayer) {
+    return L.timeDimension.layer.geoJson(gpxLayer, {
+      updateTimeDimension: true,
+      addlastPoint: true,
+      waitForReady: true
+    });
+  }
+
+  private getCustomLayer(className) {
+    const icon = L.divIcon({className});
+
+    const customLayer = L.geoJson(null, {
+      pointToLayer: (feature, latLng) => {
+        if (feature.properties.hasOwnProperty('last')) {
+          return new L.Marker(latLng, {
+            icon
+          });
+        }
+        return L.circleMarker(latLng);
+      },
+      style: className === 'red-div-icon' ? { color: '#ff0000' } : { color: '#0000ff' }
+    });
+
+    return customLayer;
+  }
+
+  private initGpxLayer(gpxFile, customLayer) {
+    const runLayer = omnivore.gpx(gpxFile, null, customLayer)
+      .on('ready', () => {
+        this.map.fitBounds(runLayer.getBounds());
+      })
+      .addTo(this.map);
+
+    return runLayer;
+  }
+
+  private initializeMap(tiles) {
+    this.map = L.map('map', {
+      timeDimension: true,
+      timeDimensionOptions: {
+        timeInterval: "2021-04-11T07:47:32Z/2021-04-11T10:02:46Z",
+        period: "PT1S"
+      },
+      timeDimensionControl: true,
+      timeDimensionControlOptions: {
+        timeSliderDragUpdate: true,
+        autoPlay: true
+      }
+    });
 
     tiles.addTo(this.map);
 
-    var bounds = L.latLngBounds(this.mapImg.point1, this.mapImg.point2).extend(this.mapImg.point3);
-		this.map.fitBounds(bounds);
-    var imageOverlay = L.imageOverlay.rotated(this.mapImg.imageUrl, this.mapImg.point1, this.mapImg.point2, this.mapImg.point3, { opacity: 0.8 });
+    const bounds = L.latLngBounds(this.mapImg.point1, this.mapImg.point2).extend(this.mapImg.point3);
+    this.map.fitBounds(bounds);
+    const imageOverlay = L.imageOverlay.rotated(this.mapImg.imageUrl, this.mapImg.point1, this.mapImg.point2, this.mapImg.point3, { opacity: 0.8 });
 
-    if (this.showRepositionMarker) this.addRepositionMarkers(this.mapImg.point1, this.mapImg.point2, this.mapImg.point3, imageOverlay);
+    if (this.showRepositionMarker) {
+      this.addRepositionMarkers(this.mapImg.point1, this.mapImg.point2, this.mapImg.point3, imageOverlay);
+    }
 
     this.map.addLayer(imageOverlay);
   }
 
-  public addRepositionMarkers(point1: L.LatLng, point2: L.LatLng, point3: L.LatLng, imageOverlay: L.ImageOverlay.Rotated)
-  {
-
-      var myicon = L.icon({
+  public addRepositionMarkers(point1: L.LatLng, point2: L.LatLng, point3: L.LatLng, imageOverlay: L.ImageOverlay.Rotated) {
+      const myicon = L.icon({
         iconSize: [ 25, 41 ],
         iconAnchor: [ 12, 41 ],
         iconUrl: 'assets/marker-icon.png',
         shadowUrl: 'assets/marker-shadow.png'
         });
 
-      var marker1 = L.marker(point1, {draggable: true, icon: myicon } ).addTo(this.map),
-      marker2 = L.marker(point2, {draggable: true, icon: myicon } ).addTo(this.map),
-      marker3 = L.marker(point3, {draggable: true, icon: myicon } ).addTo(this.map);
+      const marker1 = L.marker(point1, {draggable: true, icon: myicon } ).addTo(this.map);
+      const marker2 = L.marker(point2, {draggable: true, icon: myicon } ).addTo(this.map);
+      const marker3 = L.marker(point3, {draggable: true, icon: myicon } ).addTo(this.map);
 
-    function repositionImage() {
-      imageOverlay.reposition(marker1.getLatLng(), marker2.getLatLng(), marker3.getLatLng());
-    };
-		
-		marker1.on('drag dragend', repositionImage);
-		marker2.on('drag dragend', repositionImage);
-		marker3.on('drag dragend', repositionImage);
+      function repositionImage() {
+        imageOverlay.reposition(marker1.getLatLng(), marker2.getLatLng(), marker3.getLatLng());
+      }
+
+      marker1.on('drag dragend', repositionImage);
+      marker2.on('drag dragend', repositionImage);
+      marker3.on('drag dragend', repositionImage);
   }
 }
