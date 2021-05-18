@@ -1,12 +1,11 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
-import { mapImage } from '../../models/mapImage';
+import { Component, ChangeDetectorRef, AfterViewInit } from '@angular/core';
 import * as L from 'leaflet';
 import 'leaflet-imageoverlay-rotated';
 import * as omnivore from '@mapbox/leaflet-omnivore';
 import 'leaflet-routing-machine';
 import 'lrm-graphhopper';
 import "leaflet.animatedmarker/src/AnimatedMarker";
-
+import compjson from '../../competitions/competitions.json';
 
 @Component({
   selector: 'app-map',
@@ -16,19 +15,33 @@ import "leaflet.animatedmarker/src/AnimatedMarker";
 export class MapComponent implements AfterViewInit {
 
   private map;
-  private showRepositionMarker = true; 
-  public mapImg : mapImage;
+  private showRepositionMarker = true;
   public animatedMarker: any;
+  public competitions;
+  public colors;
 
-  constructor() {
-    this.mapImg = new mapImage();
+  constructor(private cdr: ChangeDetectorRef) {
+    this.colors = ['blue','red','green'];
    }
 
   ngAfterViewInit(): void {
-    this.initMap();
+    this.competitions = [];
+    compjson.competitions.forEach(comp => {
+      this.competitions.push(comp);
+    });
+    this.cdr.detectChanges();
   }
 
-  private initMap(): void {
+  onCompetitionChange(selectedComp) {
+    this.initMap(selectedComp);
+  }
+
+  private initMap(competitionName): void {
+    const competition = compjson.competitions.find(x => x.name === competitionName);
+
+    if (this.map !== undefined && this.map !== null) {
+      this.map.remove(); // should remove the map from UI and clean the inner children of DOM element
+    }
 
     this.map = L.map('map', {});
 
@@ -39,43 +52,47 @@ export class MapComponent implements AfterViewInit {
 
     var that = this;
 
-    var runLayer = omnivore.gpx(this.mapImg.gpxFile)
-    .on('ready', function() {
-      that.map.fitBounds(runLayer.getBounds());
-
-      if (runLayer.getLayers()[0]) 
-      {
-        this.animatedMarker = L.animatedMarker(runLayer.getLayers()[0].getLatLngs(), {
-          icon: L.divIcon({className: 'blue-div-icon'})
-        });
-        this.animatedMarker.addTo(that.map);
-        this.animatedMarker.start();
-      }
-    })
-    .addTo(this.map);
-    
-    var secondGpx = omnivore.gpx('assets/ObolonaRun/5111036665.gpx', null, L.geoJSON(null, { style: { color: '#ff0000' } }))
-    .on('ready', function() {
-      that.map.fitBounds(secondGpx.getBounds());
-
-      if (secondGpx.getLayers()[0]) 
-      {
-        this.animatedMarker = L.animatedMarker(secondGpx.getLayers()[0].getLatLngs(), {
-          icon: L.divIcon({className: 'red-div-icon'})
-        });
-        this.animatedMarker.addTo(that.map);
-        this.animatedMarker.start();
-      }
-    })
-    .addTo(this.map);
+    var i = 0;
+    competition.participants.forEach(part => {
+      var color = that.colors[i % that.colors.length];
+      i++;
+      var runLayer = omnivore.gpx("competitions/" + competitionName + "/" + part + ".gpx", null, L.geoJSON(null, { style: { color: color } }))
+      .on('ready', function() {
+        that.map.fitBounds(runLayer.getBounds());
+  
+        if (runLayer.getLayers()[0]) 
+        {
+          var iconclass = color + '-div-icon'
+          this.animatedMarker = L.animatedMarker(runLayer.getLayers()[0].getLatLngs(), {
+            icon: L.divIcon({className: iconclass})
+          });
+          this.animatedMarker.addTo(that.map);
+          this.animatedMarker.start();
+        }
+      })
+      .addTo(this.map);
+    });
 
     tiles.addTo(this.map);
 
-    var bounds = L.latLngBounds(this.mapImg.point1, this.mapImg.point2).extend(this.mapImg.point3);
-		this.map.fitBounds(bounds);
-    var imageOverlay = L.imageOverlay.rotated(this.mapImg.imageUrl, this.mapImg.point1, this.mapImg.point2, this.mapImg.point3, { opacity: 0.8 });
+    const point1 = L.latLng(+competition.mapbounds.point1Lat, +competition.mapbounds.point1Long); 
+    const point2 = L.latLng(+competition.mapbounds.point2Lat, +competition.mapbounds.point2Long);
+    const point3 = L.latLng(+competition.mapbounds.point3Lat, +competition.mapbounds.point3Long);
 
-    if (this.showRepositionMarker) this.addRepositionMarkers(this.mapImg.point1, this.mapImg.point2, this.mapImg.point3, imageOverlay);
+    var bounds = L.latLngBounds(
+      point1, 
+      point2)
+      .extend(point3);
+		this.map.fitBounds(bounds);
+    var imageOverlay = L.imageOverlay.rotated(
+      "competitions/" + competitionName + "/map.jpg", 
+      point1, 
+      point2, 
+      point3, 
+      { opacity: 0.8 });
+
+    if (this.showRepositionMarker) 
+      this.addRepositionMarkers(point1, point2, point3, imageOverlay);
 
     this.map.addLayer(imageOverlay);
   }

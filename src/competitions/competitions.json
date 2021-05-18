@@ -1,0 +1,28 @@
+{
+    "competitions": [
+        {
+            "name": "ChaynaRun", 
+            "participants": ["Lytvynenko"],
+            "mapbounds": {
+                "point1Lat": "49.833415317378744",
+                "point1Long": "36.72540664672852",
+                "point2Lat": "49.83175443381274",
+                "point2Long": "36.744589805603034",
+                "point3Lat": "49.813951717165345",
+                "point3Long": "36.720857620239265"
+            }
+        },
+        {
+            "name":"ObolonaRun", 
+            "participants": ["Lytvynenko", "Starov"],
+            "mapbounds": {
+                "point1Lat": "49.79218086595708",
+                "point1Long": "36.0917615890503",
+                "point2Lat": "49.79057397761196",
+                "point2Long": "36.12115859985352",
+                "point3Lat": "49.76602074512579",
+                "point3Long": "36.08802795410157"
+            }
+        }
+    ]
+}
