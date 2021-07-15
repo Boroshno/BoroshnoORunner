@@ -5,7 +5,6 @@ import 'leaflet-imageoverlay-rotated';
 import * as omnivore from '@mapbox/leaflet-omnivore';
 import 'leaflet-routing-machine';
 import 'lrm-graphhopper';
-import "leaflet.animatedmarker/src/AnimatedMarker";
 import 'leaflet-timedimension/dist/leaflet.timedimension.src.js';
 
 
@@ -19,7 +18,6 @@ export class MapComponent implements AfterViewInit {
   private map;
   private showRepositionMarker = true;
   public mapImg: mapImage;
-  public animatedMarker: any;
 
   constructor() {
     this.mapImg = new mapImage();
@@ -62,6 +60,8 @@ export class MapComponent implements AfterViewInit {
       overlayMaps[name] = gpxTimeLayer;
       gpxTimeLayer.addTo(this.map);
     });
+
+    L.control.layers(baseLayers, overlayMaps).addTo(this.map);
   }
 
   private initTimeLayer(gpxLayer) {
@@ -94,31 +94,52 @@ export class MapComponent implements AfterViewInit {
     const runLayer = omnivore.gpx(gpxFile, null, customLayer)
       .on('ready', () => {
         this.map.fitBounds(runLayer.getBounds());
-      })
-      .addTo(this.map);
-
+      });
     return runLayer;
   }
 
   private initializeMap(tiles) {
-    this.map = L.map('map', {
-      timeDimension: true,
-      timeDimensionOptions: {
-        timeInterval: "2021-04-11T07:47:32Z/2021-04-11T10:02:46Z",
-        period: "PT1S"
-      },
-      timeDimensionControl: true,
-      timeDimensionControlOptions: {
-        timeSliderDragUpdate: true,
-        autoPlay: true
-      }
+    this.map = L.map('map', {});
+
+    // start of TimeDimension manual instantiation
+    const timeDimension = new L.TimeDimension({
+      period: 'PT1S'
     });
+    // helper to share the timeDimension object between all layers
+    this.map.timeDimension = timeDimension;
+    // otherwise you have to set the 'timeDimension' option on all layers.
+
+    const player        = new L.TimeDimension.Player({
+      transitionTime: 100,
+      loop: false,
+      startOver: true
+    }, timeDimension);
+
+    const timeDimensionControlOptions = {
+      player,
+      timeDimension,
+      position:      'bottomleft',
+      autoPlay:      true,
+      minSpeed:      1,
+      speedStep:     0.5,
+      maxSpeed:      15,
+      timeSliderDragUpdate: true
+    };
+
+    const timeDimensionControl = new L.Control.TimeDimension(timeDimensionControlOptions);
+    this.map.addControl(timeDimensionControl);
 
     tiles.addTo(this.map);
 
     const bounds = L.latLngBounds(this.mapImg.point1, this.mapImg.point2).extend(this.mapImg.point3);
     this.map.fitBounds(bounds);
-    const imageOverlay = L.imageOverlay.rotated(this.mapImg.imageUrl, this.mapImg.point1, this.mapImg.point2, this.mapImg.point3, { opacity: 0.8 });
+    const imageOverlay = L.imageOverlay.rotated(
+      this.mapImg.imageUrl,
+      this.mapImg.point1,
+      this.mapImg.point2,
+      this.mapImg.point3,
+      { opacity: 0.8 }
+    );
 
     if (this.showRepositionMarker) {
       this.addRepositionMarkers(this.mapImg.point1, this.mapImg.point2, this.mapImg.point3, imageOverlay);

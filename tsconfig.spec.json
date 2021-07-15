@@ -14,5 +14,6 @@
   "include": [
     "src/**/*.spec.ts",
     "src/**/*.d.ts"
-  ]
+  ],
+  "types": ["node_modules/@types", "src/typings.d.ts"]
 }
