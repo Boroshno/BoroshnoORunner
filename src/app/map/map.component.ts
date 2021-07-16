@@ -15,7 +15,7 @@ import compjson from '../../competitions/competitions.json';
 export class MapComponent implements AfterViewInit {
 
   private map;
-  private showRepositionMarker = true;
+  private showRepositionMarker = false;
   public animatedMarker: any;
   public competitions;
   public colors;

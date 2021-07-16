@@ -23,6 +23,18 @@
                 "point3Lat": "49.76602074512579",
                 "point3Long": "36.08802795410157"
             }
+        },
+        {
+            "name":"HitchKharkiv", 
+            "participants": ["VIA", "DVA"],
+            "mapbounds": {
+                "point1Lat": "49.79218086595708",
+                "point1Long": "36.0917615890503",
+                "point2Lat": "49.79057397761196",
+                "point2Long": "36.12115859985352",
+                "point3Lat": "49.76602074512579",
+                "point3Long": "36.08802795410157"
+            }
         }
     ]
 }
