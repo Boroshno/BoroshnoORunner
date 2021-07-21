@@ -15,5 +15,6 @@
     "src/**/*.spec.ts",
     "src/**/*.d.ts",
     "src/competitions/*"
-  ]
+  ],
+  "types": ["node_modules/@types", "src/typings.d.ts"]
 }
