@@ -6,6 +6,8 @@ import 'leaflet-routing-machine';
 import 'lrm-graphhopper';
 import "leaflet.animatedmarker/src/AnimatedMarker";
 import compjson from '../../competitions/competitions.json';
+import 'leaflet-timedimension/dist/leaflet.timedimension.src.js';
+
 
 @Component({
   selector: 'app-map',
@@ -16,6 +18,7 @@ export class MapComponent implements AfterViewInit {
 
   private map;
   private showRepositionMarker = false;
+  private selectedCompetition = null;
   public animatedMarker: any;
   public competitions;
   public colors;
@@ -33,59 +36,53 @@ export class MapComponent implements AfterViewInit {
   }
 
   onCompetitionChange(selectedComp) {
-    this.initMap(selectedComp);
-  }
-
-  private initMap(competitionName): void {
-    const competition = compjson.competitions.find(x => x.name === competitionName);
+    this.selectedCompetition = compjson.competitions.find(x => x.name === selectedComp);
 
     if (this.map !== undefined && this.map !== null) {
       this.map.remove(); // should remove the map from UI and clean the inner children of DOM element
     }
-
     this.map = L.map('map', {});
 
+    if (this.selectedCompetition) 
+      this.initTimeDimensions();
+  }
+
+  private initTimeDimensions() {
     const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     });
 
-    var that = this;
+    this.initializeMap();
 
+    const baseLayers = {
+      OSM: tiles
+    };
+    const overlayMaps = {};
+    
     var i = 0;
-    competition.participants.forEach(part => {
-      var color = that.colors[i % that.colors.length];
+    this.selectedCompetition.participants.forEach(part => {
+      var color = this.colors[i % this.colors.length];
       i++;
-      var runLayer = omnivore.gpx("competitions/" + competitionName + "/" + part + ".gpx", null, L.geoJSON(null, { style: { color: color } }))
-      .on('ready', function() {
-        that.map.fitBounds(runLayer.getBounds());
-  
-        if (runLayer.getLayers()[0]) 
-        {
-          var iconclass = color + '-div-icon'
-          this.animatedMarker = L.animatedMarker(runLayer.getLayers()[0].getLatLngs(), {
-            icon: L.divIcon({className: iconclass})
-          });
-          this.animatedMarker.addTo(that.map);
-          this.animatedMarker.start();
-        }
-      })
-      .addTo(this.map);
+      const customLayer = L.geoJSON(null, { style: { color: color } });
+      const gpxLayer = omnivore.gpx("competitions/" + this.selectedCompetition.name + "/" + part + ".gpx", null, customLayer)
+      const gpxTimeLayer = this.initTimeLayer(gpxLayer);
+      overlayMaps[this.selectedCompetition.name] = gpxTimeLayer;
+      gpxTimeLayer.addTo(this.map);
     });
 
     tiles.addTo(this.map);
 
-    const point1 = L.latLng(+competition.mapbounds.point1Lat, +competition.mapbounds.point1Long); 
-    const point2 = L.latLng(+competition.mapbounds.point2Lat, +competition.mapbounds.point2Long);
-    const point3 = L.latLng(+competition.mapbounds.point3Lat, +competition.mapbounds.point3Long);
+    const point1 = L.latLng(+this.selectedCompetition.mapbounds.point1Lat, +this.selectedCompetition.mapbounds.point1Long); 
+    const point2 = L.latLng(+this.selectedCompetition.mapbounds.point2Lat, +this.selectedCompetition.mapbounds.point2Long);
+    const point3 = L.latLng(+this.selectedCompetition.mapbounds.point3Lat, +this.selectedCompetition.mapbounds.point3Long);
 
-    var bounds = L.latLngBounds(
+    const bounds = L.latLngBounds(
       point1, 
-      point2)
-      .extend(point3);
+      point2).extend(point3);
 		this.map.fitBounds(bounds);
-    var imageOverlay = L.imageOverlay.rotated(
-      "competitions/" + competitionName + "/map.jpg", 
+    const imageOverlay = L.imageOverlay.rotated(
+      "competitions/" + this.selectedCompetition.name + "/map.jpg", 
       point1, 
       point2, 
       point3, 
@@ -97,26 +94,62 @@ export class MapComponent implements AfterViewInit {
     this.map.addLayer(imageOverlay);
   }
 
-  public addRepositionMarkers(point1: L.LatLng, point2: L.LatLng, point3: L.LatLng, imageOverlay: L.ImageOverlay.Rotated)
-  {
+  private initTimeLayer(gpxLayer) {
+    return L.timeDimension.layer.geoJson(gpxLayer, {
+      updateTimeDimension: true,
+      addlastPoint: true,
+      waitForReady: true
+    });
+  }
 
-      var myicon = L.icon({
+  private initializeMap() {
+    // start of TimeDimension manual instantiation
+    const timeDimension = new L.TimeDimension({
+      period: 'PT1S'
+    });
+    // helper to share the timeDimension object between all layers
+    this.map.timeDimension = timeDimension;
+    // otherwise you have to set the 'timeDimension' option on all layers.
+
+    const player        = new L.TimeDimension.Player({
+      transitionTime: 100,
+      loop: false,
+      startOver: true
+    }, timeDimension);
+
+    const timeDimensionControlOptions = {
+      player,
+      timeDimension,
+      position:      'bottomleft',
+      autoPlay:      true,
+      minSpeed:      1,
+      speedStep:     0.5,
+      maxSpeed:      15,
+      timeSliderDragUpdate: true
+    };
+
+    const timeDimensionControl = new L.Control.TimeDimension(timeDimensionControlOptions);
+    this.map.addControl(timeDimensionControl);
+  }
+
+  public addRepositionMarkers(point1: L.LatLng, point2: L.LatLng, point3: L.LatLng, imageOverlay: L.ImageOverlay.Rotated) {
+      const myicon = L.icon({
         iconSize: [ 25, 41 ],
         iconAnchor: [ 12, 41 ],
         iconUrl: 'assets/marker-icon.png',
         shadowUrl: 'assets/marker-shadow.png'
         });
 
-      var marker1 = L.marker(point1, {draggable: true, icon: myicon } ).addTo(this.map),
-      marker2 = L.marker(point2, {draggable: true, icon: myicon } ).addTo(this.map),
-      marker3 = L.marker(point3, {draggable: true, icon: myicon } ).addTo(this.map);
+      const marker1 = L.marker(point1, {draggable: true, icon: myicon } ).addTo(this.map);
+      const marker2 = L.marker(point2, {draggable: true, icon: myicon } ).addTo(this.map);
+      const marker3 = L.marker(point3, {draggable: true, icon: myicon } ).addTo(this.map);
 
-    function repositionImage() {
-      imageOverlay.reposition(marker1.getLatLng(), marker2.getLatLng(), marker3.getLatLng());
-    };
-		
-		marker1.on('drag dragend', repositionImage);
-		marker2.on('drag dragend', repositionImage);
-		marker3.on('drag dragend', repositionImage);
+      function repositionImage() {
+        imageOverlay.reposition(marker1.getLatLng(), marker2.getLatLng(), marker3.getLatLng());
+      }
+
+      marker1.on('drag dragend', repositionImage);
+      marker2.on('drag dragend', repositionImage);
+      marker3.on('drag dragend', repositionImage);
   }
 }
