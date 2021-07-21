@@ -64,8 +64,8 @@ export class MapComponent implements AfterViewInit {
     this.selectedCompetition.participants.forEach(part => {
       var color = this.colors[i % this.colors.length];
       i++;
-      const customLayer = L.geoJSON(null, { style: { color: color } });
-      const gpxLayer = omnivore.gpx("competitions/" + this.selectedCompetition.name + "/" + part + ".gpx", null, customLayer)
+      const customLayer = this.initCustomLayer(color);
+      const gpxLayer = this.initGpxLayer(part, customLayer);
       const gpxTimeLayer = this.initTimeLayer(gpxLayer);
       overlayMaps[this.selectedCompetition.name] = gpxTimeLayer;
       gpxTimeLayer.addTo(this.map);
@@ -92,6 +92,26 @@ export class MapComponent implements AfterViewInit {
       this.addRepositionMarkers(point1, point2, point3, imageOverlay);
 
     this.map.addLayer(imageOverlay);
+  }
+
+  private initCustomLayer(color)
+  {
+    return L.geoJSON(null, { style: { color: color }, pointToLayer: function (feature, latlng) {
+      var geojsonMarkerOptions = {
+        radius: 8,
+        fillColor: "#ff7800",
+        color: "#000",
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.8
+    };
+      return L.circleMarker(latlng, geojsonMarkerOptions);
+    } });
+  }
+
+  private initGpxLayer(participant, customLayer)
+  {
+    return omnivore.gpx("competitions/" + this.selectedCompetition.name + "/" + participant + ".gpx", null, customLayer);
   }
 
   private initTimeLayer(gpxLayer) {
@@ -124,7 +144,7 @@ export class MapComponent implements AfterViewInit {
       autoPlay:      true,
       minSpeed:      1,
       speedStep:     0.5,
-      maxSpeed:      15,
+      maxSpeed:      300,
       timeSliderDragUpdate: true
     };
 
