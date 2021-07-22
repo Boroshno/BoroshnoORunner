@@ -103,9 +103,14 @@ export class MapComponent implements AfterViewInit {
         color: "#000",
         weight: 1,
         opacity: 1,
-        fillOpacity: 0.8
-    };
-      return L.circleMarker(latlng, geojsonMarkerOptions);
+        fillOpacity: 0.8,
+        
+      }
+      return L.circleMarker(latlng, geojsonMarkerOptions).bindTooltip(feature.properties.name, 
+      {
+          permanent: false, 
+          direction: 'right'
+      });
     } });
   }
 
@@ -142,9 +147,9 @@ export class MapComponent implements AfterViewInit {
       timeDimension,
       position:      'bottomleft',
       autoPlay:      true,
-      minSpeed:      1,
-      speedStep:     0.5,
-      maxSpeed:      300,
+      minSpeed:      300,
+      speedStep:     200,
+      maxSpeed:      2000,
       timeSliderDragUpdate: true
     };
 
