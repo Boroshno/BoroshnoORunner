@@ -33,18 +33,10 @@ export class MapComponent implements AfterViewInit {
       this.competitions.push(comp);
     });
     this.cdr.detectChanges();
-  }
 
-  onCompetitionChange(selectedComp) {
-    this.selectedCompetition = compjson.competitions.find(x => x.name === selectedComp);
-
-    if (this.map !== undefined && this.map !== null) {
-      this.map.remove(); // should remove the map from UI and clean the inner children of DOM element
-    }
-    this.map = L.map('map', {});
-
-    if (this.selectedCompetition) 
-      this.initTimeDimensions();
+    this.selectedCompetition = compjson.competitions.find(x => x.name === 'HitchKharkiv');
+    this.map = L.map('map', { center: L.latLng(49.553026, 36.248716), zoom: 9 });
+    this.initTimeDimensions();
   }
 
   private initTimeDimensions() {
@@ -73,25 +65,7 @@ export class MapComponent implements AfterViewInit {
 
     tiles.addTo(this.map);
 
-    const point1 = L.latLng(+this.selectedCompetition.mapbounds.point1Lat, +this.selectedCompetition.mapbounds.point1Long); 
-    const point2 = L.latLng(+this.selectedCompetition.mapbounds.point2Lat, +this.selectedCompetition.mapbounds.point2Long);
-    const point3 = L.latLng(+this.selectedCompetition.mapbounds.point3Lat, +this.selectedCompetition.mapbounds.point3Long);
-
-    const bounds = L.latLngBounds(
-      point1, 
-      point2).extend(point3);
-		this.map.fitBounds(bounds);
-    const imageOverlay = L.imageOverlay.rotated(
-      "competitions/" + this.selectedCompetition.name + "/map.jpg", 
-      point1, 
-      point2, 
-      point3, 
-      { opacity: 0.8 });
-
-    if (this.showRepositionMarker) 
-      this.addRepositionMarkers(point1, point2, point3, imageOverlay);
-
-    this.map.addLayer(imageOverlay);
+    this.addHardcodedHitchKharkivPoints();
   }
 
   private initCustomLayer(color)
@@ -147,9 +121,9 @@ export class MapComponent implements AfterViewInit {
       timeDimension,
       position:      'bottomleft',
       autoPlay:      true,
-      minSpeed:      300,
-      speedStep:     200,
-      maxSpeed:      2000,
+      minSpeed:      500,
+      speedStep:     500,
+      maxSpeed:      7000,
       timeSliderDragUpdate: true
     };
 
@@ -176,5 +150,63 @@ export class MapComponent implements AfterViewInit {
       marker1.on('drag dragend', repositionImage);
       marker2.on('drag dragend', repositionImage);
       marker3.on('drag dragend', repositionImage);
+  }
+
+  public addHardcodedHitchKharkivPoints() {
+    const myicon = L.icon({
+      iconSize: [ 0, 0 ],
+      iconAnchor: [ 12, 41 ],
+      iconUrl: 'assets/marker-icon.png',
+      shadowUrl: 'assets/marker-shadow.png'
+      });
+
+      L.marker(L.latLng(50.100422, 36.276376), {draggable: true, icon: myicon } )
+      .bindTooltip('СТАРТ', 
+        {
+            permanent: true, 
+            direction: 'top'
+        }).addTo(this.map);
+      L.marker(L.latLng(50.084127, 36.217563), {draggable: true, icon: myicon } )
+      .bindTooltip('ФІНІШ', 
+        {
+            permanent: true, 
+            direction: 'top'
+        }).addTo(this.map);
+      L.marker(L.latLng(48.809820, 36.701546), {draggable: true, icon: myicon } )
+      .bindTooltip('КП 1', 
+        {
+            permanent: true, 
+            direction: 'top'
+        }).addTo(this.map);
+      L.marker(L.latLng(49.717424, 35.891472), {draggable: true, icon: myicon } )
+      .bindTooltip('плав. КП', 
+        {
+            permanent: true, 
+            direction: 'top'
+        }).addTo(this.map);
+      L.marker(L.latLng(49.396783, 35.886521), {draggable: true, icon: myicon } )
+      .bindTooltip('КП 2', 
+        {
+            permanent: true, 
+            direction: 'top'
+        }).addTo(this.map);
+      L.marker(L.latLng(49.349845, 37.550815), {draggable: true, icon: myicon } )
+    .bindTooltip('плав. КП', 
+      {
+          permanent: true, 
+          direction: 'top'
+      }).addTo(this.map);
+      L.marker(L.latLng(49.526874, 37.693390), {draggable: true, icon: myicon } )
+    .bindTooltip('плав. КП', 
+      {
+          permanent: true, 
+          direction: 'top'
+      }).addTo(this.map);
+      L.marker(L.latLng(49.974466, 37.846251), {draggable: true, icon: myicon } )
+    .bindTooltip('КП 2', 
+      {
+          permanent: true, 
+          direction: 'top'
+      }).addTo(this.map);
   }
 }
